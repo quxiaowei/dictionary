@@ -1,0 +1,19 @@
+{
+  "name": "dictionary",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "electron .",
+    "pack": "electron-packager . dictionary --overwrite --ignore=dev-settings --prune"
+  },
+  "author": "quxw.work@gmail.com",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^1.6.2",
+    "electron-settings": "",
+    "electron-packager": "^8.5.2"
+  },
+  "dependencies": {
+  }
+}

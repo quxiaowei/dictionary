@@ -1,0 +1,97 @@
+<link href="./bootstrap.min.css" rel="stylesheet">
+<script src="./jquery.min.js"></script>
+<style>
+body {
+  width:100%;
+  height:100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group {
+  padding:8px;
+}
+
+select#dict {
+  width: auto;
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  -webkit-appearance: none;
+  margin-right: -1px;
+}
+
+#page-frame {
+  width: 100%;
+  flex-grow: 1;
+  border-width: 1px;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+}
+
+</style>
+<body>
+<div id='search-bar' class="col-lg-12">
+  <div class='row'>
+  <div class="input-group">
+    <div class="input-group-btn">
+      <select id='dict' class="form-control"></select>
+    </div>
+    <input type="text" class="form-control" id='word' name='word' placeholder='输入单词' />
+    <span class="input-group-btn">
+      <button id='run' class="btn btn-success" type="button">查询</button>
+    </span>
+  </div>
+  </div>
+</div>
+<script>
+  const {ipcRenderer} = require('electron')
+  const settings = require('electron-settings')
+
+  var map = {}
+
+  function initDicts() {
+    settings.get('list').then(val => {
+      if(!val){
+        settings.applyDefaultsSync()
+        map = settings.getSync('list')
+      } else {
+        map = val
+      }
+
+      var text = ''
+      for(var i in map){
+        text += '<option value="'+i+'">'+map[i].name+'</option>'
+      }
+      document.querySelector("#dict").innerHTML = text;
+    })
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    initDicts()
+
+    var button = document.querySelector("#run");
+    const remote = require('electron').remote;
+    const BrowserWindow = remote.BrowserWindow;
+    var win = new BrowserWindow({ width: 800, height: 600, show:false});
+
+    function query(e){
+      if(e.target != button && e.keyCode != 13)
+        return
+
+      var word = document.querySelector("#word").value.trim()
+      var dict = document.querySelector("#dict").value
+
+      ipcRenderer.send('asynchronous-message', {word: word, dict: dict});
+
+      document.querySelector("input#word").focus();
+    };
+
+    document.querySelector("#run").onclick = query;
+    document.querySelector(".input-group").onkeydown = query;
+    document.querySelector("input#word").focus();
+  });
+</script>
+</body>

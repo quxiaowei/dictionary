@@ -1,0 +1,182 @@
+<link href="./bootstrap.min.css" rel="stylesheet">
+<script src="./jquery.min.js"></script>
+<style>
+body {
+    width:100%;
+    height:100%;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+}
+
+.input-group {
+    padding:8px;
+}
+
+select#dict {
+    width: auto;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    -webkit-appearance: none;
+    margin-right: -1px;
+}
+
+#page-frame {
+    width: 100%;
+    flex-grow: 1;
+    border: none;
+}
+
+#search-bar {
+  border-bottom: 1px solid #999;
+  z-index:10;
+  background-color: white;
+}
+
+#loading {
+  position: absolute;
+  width:100%;
+  height:100%;
+  z-index: 5;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0,0,0,.3);
+}
+
+#loading span {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: normal;
+  font-size: 30px;
+  font-weight: bold;
+  color: rgba(0,0,0,.4);
+}
+</style>
+
+<body>
+<div id='search-bar' class="col-lg-12">
+    <div class='row'>
+    <div class="input-group">
+        <div class="input-group-btn">
+            <select id='dict' class="form-control">
+            </select>
+        </div>
+        <input type="text" class="form-control" id='word' name='word' placeholder='输入单词' />
+        <span class="input-group-btn">
+            <button id='run' class="btn btn-success" type="button">查询</button>
+        </span>
+    </div>
+    </div>
+</div>
+<webview id='page-frame'>
+    <p>webview is not support!</p>
+</webview>
+<div id="loading">
+  <span>Loading...</span>
+</div>
+
+<script>
+const settings = require('electron-settings')
+const remote = require('electron').remote
+
+settings.defaults({
+  list:{
+    merriam:{
+      name: 'Merriam-Webster',
+      url: 'https://www.merriam-webster.com/dictionary/',
+      escape: '%20',
+      css: '.abl, .mobile-fixed-ad, .fadeInRight {display:none !important;}',
+      code: 'document.querySelectorAll(".fadeInRight, .mobile-fixed-ad, .abl").forEach((item, i)=>{item.remove()})',
+    },
+    vocabulary:{
+      name: 'Vocabulary.com',
+      url: 'https://www.vocabulary.com/dictionary/',
+      escape: '%20',
+      css: '.leaderboard-ad, #adunit {display:none !important}',
+    },
+    olad:{
+      name: 'Oxford dictionary',
+      url: 'http://www.oxfordlearnersdictionaries.com/definition/english/',
+      escape: '-',
+      css: 'div[id^=ad] {display:none !important;}',
+      code: 'document.querySelectorAll("#ad_topslot_a, #ad_topslot_b, #ad_leftslot_a, #ad_btmslot_a").forEach((item, i)=>{item.remove()})',
+    },
+    ud:{
+      name: 'Urban dictionary',
+      url: 'http://www.urbandictionary.com/define.php?term=',
+      escape: '+',
+    },
+    wikipedia:{
+      name: 'Wikipedia',
+      url: 'https://en.wikipedia.org/wiki/',
+      escape: '_',
+    },
+  }
+});
+
+var map = {}
+
+function initDicts() {
+  settings.get('list').then(val => {
+    if(!val){
+      settings.resetToDefaultsSync()
+      map = settings.getSync('list')
+      console.log(map)
+    } else {
+      map = val
+    }
+
+    var text = ''
+    for(var i in map){
+      text += '<option value="'+i+'">'+map[i].name+'</option>'
+    }
+    document.querySelector("#dict").innerHTML = text;
+  })
+}
+
+function buildURL(dict, word){
+  return dict.url + word.trim().replace('/\s/', dict.escape)
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  initDicts()
+
+  var button = document.querySelector("#run");
+  var webview = document.querySelector("#page-frame")
+
+  var loadstart = function() {
+    document.querySelector("#loading").style.display = 'flex'
+  }
+  var loadstop = function() {
+    document.querySelector("#loading").style.display = 'none'
+  }
+  var domready = function() {
+    var dict = map[document.querySelector("#dict").value]
+    dict.css && webview.insertCSS(dict.css)
+    dict.code && webview.executeJavaScript(dict.code)
+    loadstop()
+  }
+
+  webview.addEventListener("did-start-loading", loadstart);
+  webview.addEventListener('did-stop-loading', loadstop)
+  webview.addEventListener('dom-ready', domready)
+
+  function query(e){
+    if(e.target != button && e.keyCode != 13)
+      return
+
+    var word = document.querySelector("#word").value.trim()
+    var dict = map[document.querySelector("#dict").value]
+    webview.setAttribute('src', buildURL(dict, word));
+    document.querySelector("input#word").focus();
+  };
+
+  document.querySelector("#run").onclick = query;
+  document.querySelector(".input-group").onkeydown = query;
+  document.querySelector("input#word").focus();
+});
+</script>
+</body>
