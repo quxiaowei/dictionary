@@ -43,16 +43,18 @@ select#dict {
   display: none;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0,0,0,.3);
 }
 
 #loading span {
   display: inline-block;
-  vertical-align: middle;
+  vertical-align: baseline;
   line-height: normal;
   font-size: 30px;
   font-weight: bold;
+  padding: 30px;
   color: rgba(0,0,0,.4);
+  background-color: rgba(0,0,0,.3);
+  border-radius: 10px;
 }
 </style>
 
@@ -162,6 +164,9 @@ document.addEventListener("DOMContentLoaded", function(){
 
   webview.addEventListener("did-start-loading", loadstart);
   webview.addEventListener('did-stop-loading', loadstop)
+  webview.addEventListener('did-fail-loading', loadstop)
+  webview.addEventListener('did-frame-finish-load', loadstop)
+  webview.addEventListener('load-commit', loadstop)
   webview.addEventListener('dom-ready', domready)
 
   function query(e){
@@ -170,12 +175,13 @@ document.addEventListener("DOMContentLoaded", function(){
 
     var word = document.querySelector("#word").value.trim()
     var dict = map[document.querySelector("#dict").value]
+    dict && loadstart()
     webview.setAttribute('src', buildURL(dict, word));
     document.querySelector("input#word").focus();
   };
 
   document.querySelector("#run").onclick = query;
-  document.querySelector(".input-group").onkeydown = query;
+  document.querySelector("#search-bar").onkeydown = query;
   document.querySelector("input#word").focus();
 });
 </script>
