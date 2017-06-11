@@ -119,7 +119,7 @@ settings.defaults({
   }
 });
 
-var map = {}
+let map = {}
 
 function initDicts() {
   settings.get('list').then(val => {
@@ -131,8 +131,8 @@ function initDicts() {
       map = val
     }
 
-    var text = ''
-    for(var i in map){
+    let text = ''
+    for(let i in map){
       text += '<option value="'+i+'">'+map[i].name+'</option>'
     }
     document.querySelector("#dict").innerHTML = text;
@@ -146,17 +146,26 @@ function buildURL(dict, word){
 document.addEventListener("DOMContentLoaded", function(){
   initDicts()
 
-  var button = document.querySelector("#run");
-  var webview = document.querySelector("#page-frame")
+  let button = document.querySelector("#run");
+  let webview = document.querySelector("#page-frame")
 
-  var loadstart = function() {
+  let loadstart = function(e) {
+    e&&console.log(e.type)
     document.querySelector("#loading").style.display = 'flex'
   }
-  var loadstop = function() {
+  let loadstop = function(e) {
+    e&&console.log(e.type)
     document.querySelector("#loading").style.display = 'none'
   }
-  var domready = function() {
-    var dict = map[document.querySelector("#dict").value]
+  let loadfail = function(e) {
+    console.log('loadfail')
+    e&&console.log(e.type)
+    loadstop()
+    webview.setAttribute('src', './fail.html')
+  }
+  let domready = function(e) {
+    e&&console.log(e.type)
+    let dict = map[document.querySelector("#dict").value]
     dict.css && webview.insertCSS(dict.css)
     dict.code && webview.executeJavaScript(dict.code)
     loadstop()
@@ -164,17 +173,17 @@ document.addEventListener("DOMContentLoaded", function(){
 
   webview.addEventListener("did-start-loading", loadstart);
   webview.addEventListener('did-stop-loading', loadstop)
-  webview.addEventListener('did-fail-loading', loadstop)
+  webview.addEventListener('did-fail-loading', loadfail)
   webview.addEventListener('did-frame-finish-load', loadstop)
-  webview.addEventListener('load-commit', loadstop)
+  // webview.addEventListener('load-commit', loadstop)
   webview.addEventListener('dom-ready', domready)
 
   function query(e){
     if(e.target != button && e.keyCode != 13)
       return
 
-    var word = document.querySelector("#word").value.trim()
-    var dict = map[document.querySelector("#dict").value]
+    let word = document.querySelector("#word").value.trim()
+    let dict = map[document.querySelector("#dict").value]
     dict && loadstart()
     webview.setAttribute('src', buildURL(dict, word));
     document.querySelector("input#word").focus();

@@ -1,4 +1,4 @@
-const {app, electron, BrowserWindow, ipcMain} = require('electron')
+const {app, electron, BrowserWindow, ipcMain, Menu} = require('electron')
 const settings = require('electron-settings')
 const path = require('path')
 const url = require('url')
@@ -16,7 +16,48 @@ function createWindow() {
     slashes: true,
   }))
 
-  win.on('closed', ()=> {
+  var template = [
+    {
+      label: "Application",
+      submenu: [
+          { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); }}
+      ]
+    },
+    {
+      label: "Edit",
+      submenu: [
+        {role: 'undo'},
+        {role: 'redo'},
+        {type: 'separator'},
+        {role: 'cut'},
+        {role: 'copy'},
+        {role: 'paste'},
+        {role: 'pasteandmatchstyle'},
+        {role: 'delete'},
+        {role: 'selectall'}
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        {role: 'reload'},
+        {role: 'forcereload'},
+        {role: 'toggledevtools'},
+        {type: 'separator'},
+        {role: 'resetzoom'},
+        {role: 'zoomin'},
+        {role: 'zoomout'},
+        {type: 'separator'},
+        {role: 'togglefullscreen'}
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+
+
+  win.on('closed', () => {
     win.removeAllListeners('close');
     win = null
     app.quit()
